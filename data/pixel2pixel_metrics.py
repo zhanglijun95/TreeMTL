@@ -25,8 +25,10 @@ class DataMetrics(object):
             self.records = {'cos_similaritys': []}
         elif self.task == 'depth_zbuffer':
             self.records = {'abs_errs': [], 'rel_errs': [], 'sq_rel_errs': [], 'ratios': [], 'rms': [], 'rms_log': []}
-        elif self.task == 'keypoints2d' or self.task == 'edge_texture':
-            self.records = {'errs': []}
+        elif self.task == 'keypoints2d':
+            self.records = {'key_errs': []}
+        elif self.task == 'edge_texture':
+            self.records = {'edge_errs': []}
         
     def resize_pred(self, pred, gt):
         return F.interpolate(pred, size=gt.shape[-2:])
@@ -125,8 +127,11 @@ class DataMetrics(object):
     
     def __keypoint_edge_records(self, pred, gt):
         err = self.__keypoint_edge_error(pred, gt)
-        self.records['errs'].append(err)
-    
+        if self.task == 'keypoints2d':
+            self.records['key_errs'].append(err)
+        elif self.task == 'edge_texture':
+            self.records['edge_errs'].append(err)
+        
     # Call for each batch
     def __call__(self, pred, gt, mask=None):
         self.batch_size.append(len(gt))
@@ -179,9 +184,9 @@ class TaskonomyMetrics(DataMetrics):
         elif self.task == 'depth_zbuffer':
             self.refer = {'abs_err': 0.022}
         elif self.task == 'keypoints2d':
-            self.refer = {'err': 0.197}
+            self.refer = {'key_err': 0.197}
         elif self.task == 'edge_texture':
-            self.refer = {'err': 0.212}
+            self.refer = {'edge_err': 0.212}
         
      # Call after evaluate all data in the set
     def val_metrics(self):
@@ -219,7 +224,10 @@ class TaskonomyMetrics(DataMetrics):
     
     def __keypoint_edge_metrics(self):
         val_metrics = {}
-        val_metrics['err'] = (self.records['errs'] * np.array(self.batch_size)).sum() / sum(self.batch_size)
+        if self.task == 'keypoints2d':
+            val_metrics['key_err'] = (self.records['key_errs'] * np.array(self.batch_size)).sum() / sum(self.batch_size)
+        elif self.task == 'edge_texture':
+            val_metrics['edge_err'] = (self.records['edge_errs'] * np.array(self.batch_size)).sum() / sum(self.batch_size)
 #         val_metrics['cmp'] = (self.refer['err'] - val_metrics['err']) / self.refer['err']
         return val_metrics
     

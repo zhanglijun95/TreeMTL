@@ -59,8 +59,8 @@ if seed != 0:
     random.seed(seed)
     np.random.seed(seed)
 
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
+#     torch.backends.cudnn.benchmark = False
+#     torch.backends.cudnn.deterministic = True
     # torch.use_deterministic_algorithms(True) 
 else:
     print('Default Seed 0 -> No Seed', flush=True)
@@ -120,7 +120,6 @@ elif args.data == 'Taskonomy':
         tasks = all_tasks
         
     for task in tasks:
-        print(task, flush=True)
         criterionDict[task] = TaskonomyCriterions(task, dataroot)
         metricDict[task] = TaskonomyMetrics(task, dataroot)
         cls_num[task] = task_cls_num[task]
@@ -133,15 +132,50 @@ print('Finish Data Loading', flush=True)
 ########################## Params from Backbone #################################
 if args.backbone == 'resnet34':
     prototxt = 'models/deeplab_resnet34_adashare.prototxt'
+    backbone_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/resnet34_backbone.model')
+    if args.data == 'NYUv2':
+        heads_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/resnet34_NYUv2_heads.model')
+    elif args.data == 'Taskonomy':
+        heads_init_path = None
+        
     coarse_B = 5
     mapping = {0:[0], 1:[1,2,3], 2:[4,5,6,7], 3:[8,9,10,11,12,13], 4:[14,15,16], 5:[17]}
+    
 elif args.backbone == 'mobilenet':
     prototxt = 'models/mobilenetv2.prototxt'
+    backbone_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_backbone.model')
+    if args.data == 'NYUv2':
+        heads_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_NYUv2_heads.model')
+    elif args.data == 'Taskonomy':
+        backbone_init_path = None
+        heads_init_path = None
+        
 #     coarse_B = 9
 #     mapping = {0:[0], 1:[1,2], 2:[3,4,5,6], 3:[7,8,9,10,11], 4:[12,13,14,15,16,17], 5:[18,19,20,21,22], 
-#            6:[23,24,25,26,27], 7:[28,29,30], 8:[31], 9:[32]} 
-    coarse_B = 6
-    mapping = {0:[0], 1:[1,2,3,4,5,6], 2:[7,8,9,10,11], 3:[12,13,14,15,16,17], 4:[18,19,20,21,22,23,24,25,26,27], 5:[28,29,30,31], 6:[32]} 
+#               6:[23,24,25,26,27], 7:[28,29,30], 8:[31], 9:[32]} 
+#     coarse_B = 6
+#     mapping = {0:[0], 1:[1,2,3,4,5,6], 2:[7,8,9,10,11], 3:[12,13,14,15,16,17], 4:[18,19,20,21,22,23,24,25,26,27], 5:[28,29,30,31], 6:[32]} 
+    coarse_B = 5
+    mapping = {0:[0,1,2,3,4,5,6], 1:[7,8,9,10,11,12,13,14,15,16,17], 2:[18,19,20,21,22], 
+           3:[23,24,25,26,27,28,29,30], 4:[31], 5:[32]} 
+    
+elif args.backbone == 'mobilenetS':
+    prototxt = 'models/mobilenetv2_shorter.prototxt'
+    backbone_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_shorter_backbone.model')
+    if args.data == 'NYUv2':
+        heads_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_shorter_NYUv2_heads.model')
+    elif args.data == 'Taskonomy':
+        backbone_init_path = None
+        heads_init_path = None
+    
+    coarse_B = 8
+    mapping = {0:[0], 1:[1,2], 2:[3,4,5,6], 3:[7,8,9,10,11], 4:[12,13,14,15,16,17], 5:[18,19,20,21,22], 
+           6:[23,24,25,26,27], 7:[28,29,30], 8:[31]} 
+        
+#     coarse_B = 4
+#     mapping = {0:[0,1,2,3,4,5,6], 1:[7,8,9,10,11,12,13,14,15,16,17], 2:[18,19,20,21,22], 
+#            3:[23,24,25,26,27,28,29,30], 4:[31]} 
+    
 else:
     print('Wrong backbone!')
     exit()
@@ -193,9 +227,11 @@ print('='*60, flush=True)
 
 ################################ Generate Model ##################################
 if exp == '2task':
-    model = MTSeqModel(prototxt, branch=branch, fined_B=fined_B, feature_dim=feature_dim, cls_num=cls_num)
+    model = MTSeqModel(prototxt, branch=branch, fined_B=fined_B, feature_dim=feature_dim, cls_num=cls_num, 
+                 backbone_init=backbone_init_path, heads_init=heads_init_path)
 elif exp == 'verify':
-    model = MTSeqModel(prototxt, layout=layout, feature_dim=feature_dim, cls_num=cls_num)
+    model = MTSeqModel(prototxt, layout=layout, feature_dim=feature_dim, cls_num=cls_num, 
+                 backbone_init=backbone_init_path, heads_init=heads_init_path)
 model = model.cuda()
 print('Finish Model Generation', flush=True)
 

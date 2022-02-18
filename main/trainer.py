@@ -1,4 +1,5 @@
 import numpy as np
+from sys import exit
 import torch
 
 class Trainer():
@@ -58,7 +59,7 @@ class Trainer():
         x = data['input'].cuda()
         self.optimizer.zero_grad()
         output = self.model(x)
-        
+         
         loss = 0
         for task in self.tasks:
             y = data[task].cuda()
@@ -131,6 +132,7 @@ class Trainer():
     def save_model(self, it, savePath):
         state = {'iter': it,
                 'state_dict': self.model.state_dict(),
+                'layout': self.model.layout,
                 'optimizer': self.optimizer.state_dict(),
                 'scheduler': self.scheduler.state_dict()}
         if hasattr(self.model, 'branch') and self.model.branch is not None:

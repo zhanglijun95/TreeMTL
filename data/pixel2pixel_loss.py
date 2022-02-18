@@ -66,8 +66,10 @@ class DataCriterions(nn.Module):
             return self.sn_loss(pred, gt, mask)
         elif self.task == 'depth_zbuffer':
             return self.depth_loss(pred, gt, mask)
-        elif self.task == 'keypoints2d' or self.task is 'edge_texture':
+        elif self.task == 'keypoints2d' or self.task == 'edge_texture':
             return self.keypoint_edge_loss(pred, gt)
+        else:
+            print('Wrong task for the criterion!', flush=True)
         
 class TaskonomyCriterions(DataCriterions):
     def __init__(self, task, dataroot):

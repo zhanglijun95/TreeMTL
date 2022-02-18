@@ -1,6 +1,7 @@
 import networkx as nx
 import copy
 import gc
+from sys import exit
 
 import torch
 import torch.nn as nn
@@ -38,7 +39,7 @@ class ComputeBlock(nn.Module):
 
         
 class MTSeqBackbone(nn.Module):
-    def __init__(self, prototxt, layout=None):
+    def __init__(self, prototxt, layout=None, backbone_init=None):
         super(MTSeqBackbone, self).__init__()
         self.prototxt = self.parse_prototxt(prototxt)
         self.layout = layout
@@ -58,6 +59,13 @@ class MTSeqBackbone(nn.Module):
         if self.layout is None: # Indivial Model
             self.basic_blocks = nn.ModuleList(self.basic_blocks)
         else:
+            # Load Init Weights for backbone blocks
+            if backbone_init is not None:
+                temp_basic_blocks = nn.ModuleList(self.basic_blocks)
+                temp_basic_blocks.load_state_dict(torch.load(backbone_init))
+                self.basic_blocks = list(temp_basic_blocks)
+                
+            
             # Step 3: Copy ComputeBlock to construct Multi-Task Model
             #         Copy 1 block for each task set of the layout in each layer
             
@@ -83,14 +91,16 @@ class MTSeqBackbone(nn.Module):
             self.mtl_blocks = nn.ModuleList(self.mtl_blocks)
             
         gc.collect()
-        # Step 4: Initiate Weights
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, 0.01)
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+        
+        if backbone_init is None:
+            # Step 4: Initiate Weights
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                    m.weight.data.normal_(0, 0.01)
+                elif isinstance(m, nn.BatchNorm2d):
+                    m.weight.data.fill_(1)
+                    m.bias.data.zero_()
     
     def forward(self, x): 
         self.inputNode.set_data(x)
@@ -105,6 +115,20 @@ class MTSeqBackbone(nn.Module):
                 if block.layer_idx == self.layout.B - 1:
                     for task in block.task_set:
                         features[task] = output
+            return features
+        
+    def extract_features(self, x):
+        self.inputNode.set_data(x)
+        if self.layout is None:
+            for block in self.basic_blocks:
+                feature = block.forward()
+            return feature
+        else:
+            features = [[] for i in range(self.layout.T)] 
+            for block in self.mtl_blocks:
+                output = block.forward()
+                for task in block.task_set:
+                    features[task].append(output)
             return features
     
     ########## Functions for generating CNodes list ############
@@ -276,7 +300,7 @@ class MTSeqBackbone(nn.Module):
     
     
 class MTSeqModel(nn.Module):
-    def __init__(self, prototxt, layout=None, branch=None, fined_B=None, feature_dim=512, cls_num={}):
+    def __init__(self, prototxt, layout=None, branch=None, fined_B=None, feature_dim=512, cls_num={}, backbone_init=None, heads_init=None, verbose=True):
         super(MTSeqModel, self).__init__()
         
         # Note: Both layout and branch are fined ones (coarse to fined are converted outside the model initialization)
@@ -296,12 +320,15 @@ class MTSeqModel(nn.Module):
             print('Missing params for constrcuting multi-task model.', flush=True)
             exit()
         
-        print('Construct MTSeqModel from Layout:', flush=True)
-        print(self.layout, flush=True)
-        self.backbone = MTSeqBackbone(prototxt, self.layout)
+        if verbose:
+            print('Construct MTSeqModel from Layout:', flush=True)
+            print(self.layout, flush=True)
+        self.backbone = MTSeqBackbone(prototxt, self.layout, backbone_init)
         self.heads = nn.ModuleDict()
         for task in cls_num:
             self.heads[task] = ASPPHeadNode(feature_dim, cls_num[task])
+        if heads_init is not None:
+            self.heads.load_state_dict(torch.load(heads_init), strict=False)
         
     def forward(self, x):
         features = self.backbone(x)
@@ -311,6 +338,9 @@ class MTSeqModel(nn.Module):
             output[task] = self.heads[task](features[idx])
             idx += 1
         return output
+
+    def extract_features(self, x):
+        return self.backbone.extract_features(x)
     
     ############### Helper Function #############
     

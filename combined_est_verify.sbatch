@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N1                          # Ensure that all cores are on one machine
-#SBATCH --mem=4096               # Memory pool for all cores (see also --mem-per-cpu)
+#SBATCH --mem=10240               # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --gres=gpu:1
 ####efefSBATCH --cpus-per-task=4
 #SBATCH --time=7-00:00:00

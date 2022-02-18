@@ -65,6 +65,8 @@ class Layout():
             if not equal:
                 break
         return equal
+    def __getitem__(self, index):
+        return self.state[index]
     # For sort
     def __lt__(self, other):
         return self.score < other.score
