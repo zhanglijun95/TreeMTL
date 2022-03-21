@@ -4,6 +4,7 @@ partition=1080ti-long
 exp_i=0
 
 ######### for NYUv2 ##########
+<<<<<<< HEAD
 data=NYUv2
 batch_size=16
 total_iters=20000
@@ -34,12 +35,45 @@ declare -a taskcombinations=(
 # "segment_semantic depth_zbuffer"
 # "segment_semantic keypoints2d"
 # "segment_semantic edge_texture"
+=======
+# data=NYUv2
+# batch_size=16
+# total_iters=40000
+# lr=0.001
+# decay_lr_freq=4000
+# decay_lr_rate=0.5
+# print_iters=50
+# save_iters=200
+# val_iters=200
+# declare -a taskcombinations=(
+#"segment_semantic normal"
+#"segment_semantic depth_zbuffer"
+# "normal depth_zbuffer"
+# )
+
+######### for Taskonomy ##########
+data=Taskonomy
+batch_size=16
+total_iters=50000
+lr=0.0001
+decay_lr_freq=10000
+decay_lr_rate=0.3
+print_iters=100
+save_iters=500
+val_iters=500
+declare -a taskcombinations=(
+# "segment_semantic normal"
+# "segment_semantic depth_zbuffer"
+# "segment_semantic keypoints2d"
+"segment_semantic edge_texture"
+>>>>>>> f84af28bb95baaf2a74c0880059e6dd3f8683cba
 # "normal depth_zbuffer"
 # "normal keypoints2d"
 # "normal edge_texture"
 # "depth_zbuffer keypoints2d"
 # "depth_zbuffer edge_texture"
 # "keypoints2d edge_texture"
+<<<<<<< HEAD
 # )
 
 ########### others ##########
@@ -49,13 +83,28 @@ seed=20
 backbone='mobilenet' # 9/6/5 (coarse) = 32 = all share
 # backbone='mobilenetS' # 8 = all share
 reload=false
+=======
+)
+
+########### others ##########
+exp_dir=2task_mobilenet_0203/
+seed=10
+# backbone='resnet34' # 5 (coarse) = 17 = all share
+backbone='mobilenet' # 9/6/5 (coarse) = 32 = all share
+# backbone='mobilenetS' # 8 = all share
+reload=true
+>>>>>>> f84af28bb95baaf2a74c0880059e6dd3f8683cba
 
 ########## run ##########
 for taskcombination in "${taskcombinations[@]}"; do
     read -a two_task <<< "$taskcombination"
     task1=${two_task[0]}
     task2=${two_task[1]}
+<<<<<<< HEAD
     for ((branch=0;branch<=5;branch++)); do 
+=======
+    for ((branch=5;branch<=5;branch++)); do 
+>>>>>>> f84af28bb95baaf2a74c0880059e6dd3f8683cba
        if ((exp_i>=30)); then
           partition=titanx-long
        fi
