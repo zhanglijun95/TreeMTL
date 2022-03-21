@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 log_dir=/mnt/nfs/work1/huiguan/lijunzhang/multibranch/log
-partition=titanx-long
+partition=m40-long
 exp_i=0
 
 ######### for NYUv2 ##########
-# data=NYUv2
-# batch_size=16
-# total_iters=20000
-# lr=0.001
-# decay_lr_freq=4000
-# decay_lr_rate=0.5
-# print_iters=50
-# save_iters=200
-# val_iters=200
+data=NYUv2
+batch_size=16
+total_iters=20000
+lr=0.001
+decay_lr_freq=4000
+decay_lr_rate=0.5
+print_iters=50
+save_iters=200
+val_iters=200
 
 # for resnet
 # declare -a idxs=(383 342 415 344 278 251 231 161 65) # 10-07 -> 10/14 reload; 10-19
@@ -34,21 +34,25 @@ exp_i=0
 # declare -a idxs=(11 18 20 25 24 131 137 111 113 106 110 101 115 125 68 42 66 67 96 100 46 61 91 35 72 88 86 77 84) # 01-17
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 17 19 25 23 49 50 12 21) # 01-23 -> reload
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 9 17 19 25 23 49 50 12 4 14 21) # 01-24
+# declare -a idxs=(0 7 11 10 9 8 16 15 39 31 49 38 48 40 17 4 1 27 6 23) # 02-21
+declare -a idxs=(8) # 02-21
 
 ######### for Taskonomy ##########
-data=Taskonomy
-batch_size=8
-total_iters=50000
-lr=0.0001
-decay_lr_freq=10000
-decay_lr_rate=0.3
-print_iters=100
-save_iters=500
-val_iters=500
+# data=Taskonomy
+# batch_size=8
+# total_iters=50000
+# lr=0.0001
+# decay_lr_freq=10000
+# decay_lr_rate=0.3
+# print_iters=100
+# save_iters=500
+# val_iters=500
 
 # for resnet
 # declare -a idxs=(1057447) # learn to branch
 # declare -a idxs=(213) # which task
+# declare -a idxs=(150) # what to share
+# declare -a idxs=(7537) # BMTAS
 # declare -a idxs=(352 958 480 353 360 469 190 959 1037 358 962 1020 481 350 483 1043 348 235 191 200) # verify_0123
 # declare -a idxs=(360 350 483 480 1043) # verify_0123 reload
 # declare -a idxs=(352 958 480 353 360) # verify_0202 top5
@@ -57,11 +61,11 @@ val_iters=500
 # declare -a idxs=(2947 3221 3215 3220 3261 3043 615 1203 3005 1437 2531 626) # verify_0216 mobilenet m40
 # declare -a idxs=(0 615) # verify_0216 mobilenet rtx8000
 # declare -a idxs=(1269 2588 3825 1325 2876 688 2908 1576 2620 1667 2027) # verify_0216 mobilenet titanx
-declare -a idxs=(688 1667 2027)
+# declare -a idxs=(688 1667 2027)
 
 ########### others ##########
-exp_dir=verify_0216/
-seed=10
+exp_dir=verify_0221/
+seed=20
 # backbone='resnet34'
 backbone='mobilenet'
 # backbone='mobilenetS'
