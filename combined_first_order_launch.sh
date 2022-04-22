@@ -14,8 +14,8 @@ print_iters=50
 save_iters=200
 val_iters=200
 declare -a taskcombinations=(
-"segment_semantic normal"
-"segment_semantic depth_zbuffer"
+# "segment_semantic normal"
+# "segment_semantic depth_zbuffer"
 "normal depth_zbuffer"
 )
 
@@ -43,8 +43,8 @@ declare -a taskcombinations=(
 # )
 
 ########### others ##########
-exp_dir=2task_mobilenet_0221/
-seed=20
+exp_dir=2task_mobilenet_0414_40/
+seed=40
 # backbone='resnet34' # 5 (coarse) = 17 = all share
 backbone='mobilenet' # 9/6/5 (coarse) = 32 = all share
 # backbone='mobilenetS' # 8 = all share
@@ -55,7 +55,7 @@ for taskcombination in "${taskcombinations[@]}"; do
     read -a two_task <<< "$taskcombination"
     task1=${two_task[0]}
     task2=${two_task[1]}
-    for ((branch=0;branch<=5;branch++)); do 
+    for ((branch=0;branch<=4;branch++)); do 
        if ((exp_i>=30)); then
           partition=titanx-long
        fi
@@ -65,7 +65,7 @@ for taskcombination in "${taskcombinations[@]}"; do
            sbatch --partition ${partition} --job-name=FO${branch} \
             -o ${log_dir}/${data}/${out_dir}${task1}_${task2}_b${branch}.stdout \
             -e ${log_dir}/${data}/${out_dir}${task1}_${task2}_b${branch}.stderr \
-            --exclude node[094,097,131] \
+            --exclude node[094,095,097,131] \
             combined_est_verify.sbatch \
             --exp_dir ${exp_dir} --seed ${seed} --data ${data} --batch_size ${batch_size} --backbone ${backbone} \
             --branch ${branch} --two_task ${task1} ${task2} --total_iters ${total_iters} --reload \
@@ -77,7 +77,7 @@ for taskcombination in "${taskcombinations[@]}"; do
            sbatch --partition ${partition} --job-name=FO${branch} \
             -o ${log_dir}/${data}/${out_dir}${task1}_${task2}_b${branch}.stdout \
             -e ${log_dir}/${data}/${out_dir}${task1}_${task2}_b${branch}.stderr \
-            --exclude node[094,097,131] \
+            --exclude node[094,095,097,131] \
             combined_est_verify.sbatch \
             --exp_dir ${exp_dir} --seed ${seed} --data ${data} --batch_size ${batch_size} --backbone ${backbone} \
             --branch ${branch} --two_task ${task1} ${task2} --total_iters ${total_iters} \

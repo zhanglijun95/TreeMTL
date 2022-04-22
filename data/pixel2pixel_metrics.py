@@ -179,14 +179,19 @@ class TaskonomyMetrics(DataMetrics):
     def define_refer(self):
         if self.task == 'segment_semantic':
             self.refer = {'err': 0.575}
+            self.metric_prop = {'err': True}
         elif self.task == 'normal':
             self.refer = {'cosine_similarity': 0.707}
+            self.metric_prop = {'cosine_similarity': False}
         elif self.task == 'depth_zbuffer':
             self.refer = {'abs_err': 0.022}
+            self.metric_prop = {'abs_err': True}
         elif self.task == 'keypoints2d':
             self.refer = {'key_err': 0.197}
+            self.metric_prop = {'key_err': True}
         elif self.task == 'edge_texture':
             self.refer = {'edge_err': 0.212}
+            self.metric_prop = {'edge_err': True}
         
      # Call after evaluate all data in the set
     def val_metrics(self):
@@ -317,11 +322,14 @@ class NYUMetrics(DataMetrics):
                 self.refer = {'Angle Mean': 15, 'Angle Median': 11.5, 'Angle 11.25': 49.2, 'Angle 22.5': 76.7, 'Angle 30': 86.8}
         elif self.task_num == 3:
             if self.task == 'segment_semantic':
-                self.refer = {'mIoU': 0.275, 'Pixel Acc': 0.589}
+                self.refer = {'mIoU': 0.207, 'Pixel Acc': 0.4946}
+                self.metric_prop = {'mIoU': False, 'Pixel Acc': False}
             elif self.task == 'normal':
-                self.refer = {'Angle Mean': 17.5, 'Angle Median': 14.2, 'Angle 11.25': 34.9, 'Angle 22.5': 73.3, 'Angle 30': 85.7}
+                self.refer = {'Angle Mean': 18.4084, 'Angle Median': 16.4094, 'Angle 11.25': 29.03, 'Angle 22.5': 69.7519, 'Angle 30': 84.6}
+                self.metric_prop = {'Angle Mean': True, 'Angle Median': True, 'Angle 11.25': False, 'Angle 22.5': False, 'Angle 30': False}
             elif self.task == 'depth_zbuffer':
-                self.refer = {'abs_err': 0.62, 'rel_err': 0.25, 'sigma_1.25': 57.9, 'sigma_1.25^2': 85.8, 'sigma_1.25^3': 95.7}
+                self.refer = {'abs_err': 0.7244, 'rel_err': 0.2671, 'sigma_1.25': 50.5169, 'sigma_1.25^2': 81.1718, 'sigma_1.25^3': 94.0086}
+                self.metric_prop = {'abs_err': True,'rel_err': True,'sigma_1.25': False,'sigma_1.25^2': False,'sigma_1.25^3': False}
         
      # Call after evaluate all data in the set
     def val_metrics(self):

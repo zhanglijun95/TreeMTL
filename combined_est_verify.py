@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--projectroot', action='store', dest='projectroot', default='/mnt/nfs/work1/huiguan/lijunzhang/multibranch/', help='project directory')
 parser.add_argument('--dataroot', action='store', dest='dataroot', default='/mnt/nfs/work1/huiguan/lijunzhang/policymtl/data/', help='datasets directory')
 parser.add_argument('--ckpt_dir', action='store', dest='ckpt_dir', default='checkpoint/', help='checkpoints directory')
+parser.add_argument('--writer_dir', action='store', dest='writer_dir', default='writer/', help='writer directory')
 parser.add_argument('--exp_dir', action='store', dest='exp_dir', default='exp/', help='save exp model directory')
 
 parser.add_argument('--seed', action='store', dest='seed', default=10, type=int, help='seed')
@@ -252,12 +253,15 @@ trainer = Trainer(model, tasks, trainDataloader, valDataloader, criterionDict, m
 
 if exp == '2task':
     savepath = os.path.join(args.projectroot, args.ckpt_dir, args.data, args.exp_dir)
+    writerpath = None
 elif exp == 'verify':
     savepath = os.path.join(args.projectroot, args.ckpt_dir, args.data, args.exp_dir, str(args.layout_idx)+'/')
+    writerpath = os.path.join(args.projectroot, args.writer_dir, args.data, args.exp_dir, str(args.layout_idx)+'/')
+    Path(writerpath).mkdir(parents=True, exist_ok=True)
 Path(savepath).mkdir(parents=True, exist_ok=True)
 
 if args.reload is False:
-    trainer.train(args.total_iters, loss_lambda, savepath)
+    trainer.train(args.total_iters, loss_lambda, savepath, writerPath=writerpath)
 else:
     if exp == '2task':
         reload_ckpt = '_'.join(tasks) + '_b' + str(branch) + '.model'

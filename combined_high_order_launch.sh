@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 log_dir=/mnt/nfs/work1/huiguan/lijunzhang/multibranch/log
-partition=m40-long
+partition=rtx8000-long
 exp_i=0
 
 ######### for NYUv2 ##########
@@ -35,7 +35,7 @@ val_iters=200
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 17 19 25 23 49 50 12 21) # 01-23 -> reload
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 9 17 19 25 23 49 50 12 4 14 21) # 01-24
 # declare -a idxs=(0 7 11 10 9 8 16 15 39 31 49 38 48 40 17 4 1 27 6 23) # 02-21
-declare -a idxs=(8) # 02-21
+declare -a idxs=(2) # 04-12
 
 ######### for Taskonomy ##########
 # data=Taskonomy
@@ -64,8 +64,8 @@ declare -a idxs=(8) # 02-21
 # declare -a idxs=(688 1667 2027)
 
 ########### others ##########
-exp_dir=verify_0221/
-seed=20
+exp_dir=exp/
+seed=10
 # backbone='resnet34'
 backbone='mobilenet'
 # backbone='mobilenetS'

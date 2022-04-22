@@ -32,6 +32,10 @@ class Conv2dNode(ComputeNode):
                              }
         
         self.build_layer()
+        
+        # new to fast-MTL
+        self.in_ord = None
+        self.out_ord = None
     
     def set_output_channels(self):
         # Function: Set output channels according to different OpType
