@@ -19,7 +19,8 @@ class Layout():
         self.lowest_avail_cut = 0
         
         # new to fast-MTL
-        self.effort = 0.
+        self.conv_iter = [] # list of tuple, tuple for range
+        self.virtual_loss = [] # list of float, float for loss
         
         # Should be updated in the metric_inference function
         self.metric_list = [0.] * self.T
@@ -72,6 +73,4 @@ class Layout():
         return self.state[index]
     # For sort
     def __lt__(self, other):
-#         return self.score < other.score
-#         return self.flops < other.flops
-        return self.effort < other.effort # new to fast-MTL
+        return self.score < other.score

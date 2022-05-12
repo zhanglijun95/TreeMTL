@@ -16,6 +16,13 @@ class ASPPHeadNode(nn.Module):
         output = self.fc1(x) + self.fc2(x) + self.fc3(x) + self.fc4(x)
         return output
     
+    def reset_parameters(self):
+        self.fc1.reset_parameters()
+        self.fc2.reset_parameters()
+        self.fc3.reset_parameters()
+        self.fc4.reset_parameters()
+        return
+    
 class Classification_Module(nn.Module):
     def __init__(self, inplanes, num_classes, rate=12):
         super(Classification_Module, self).__init__()
@@ -34,3 +41,9 @@ class Classification_Module(nn.Module):
         x = self.dropout(x)
         x = self.conv3(x)
         return x
+    
+    def reset_parameters(self):
+        self.conv1.reset_parameters()
+        self.conv2.reset_parameters()
+        self.conv3.reset_parameters()
+        return

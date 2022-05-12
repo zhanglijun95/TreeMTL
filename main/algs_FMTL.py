@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from statistics import mean
+import pickle
 
 from main.auto_models import ComputeBlock
 from framework.layer_node import Conv2dNode, InputNode

@@ -12,6 +12,7 @@ class Trainer():
         self.model = model
         self.startIter = 0
         self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=lr, betas=(0.5, 0.999), weight_decay=0.0001)
+#         self.optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.model.parameters()), lr=lr)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=decay_lr_freq, gamma=decay_lr_rate)
         
         self.tasks = tasks
@@ -46,7 +47,7 @@ class Trainer():
             self.load_model(savePath, reload)
 
         for i in range(self.startIter, iters):
-            if self.counter >= self.stop:
+            if self.early_stop and self.counter >= self.stop:
                 if savePath is not None:
                     self.save_model(i, savePath)
                 print('Early Stop Occur at {} Iter'.format((i+1)), flush=True)

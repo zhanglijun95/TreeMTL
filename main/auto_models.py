@@ -37,6 +37,12 @@ class ComputeBlock(nn.Module):
             return True
         else:
             return False
+    
+    def reset_parameters(self):
+        for node in self.compute_nodes:
+            if hasattr(node, 'reset_parameters'):
+                node.reset_parameters()
+        return
 
         
 class MTSeqBackbone(nn.Module):
@@ -132,6 +138,16 @@ class MTSeqBackbone(nn.Module):
                     features[task].append(output)
             return features
     
+    def reset_parameters(self):
+        if self.layout is None:
+            for block in self.basic_blocks:
+                if hasattr(block, 'reset_parameters'):
+                    block.reset_parameters()
+        else:
+            for block in self.mtl_blocks:
+                if hasattr(block, 'reset_parameters'):
+                    block.reset_parameters()
+        return
     ########## Functions for generating CNodes list ############
     def parse_prototxt(self, prototxt):
         # Function: Parse prototxt by protobuf
@@ -342,6 +358,12 @@ class MTSeqModel(nn.Module):
 
     def extract_features(self, x):
         return self.backbone.extract_features(x)
+    
+    def reset_parameters(self):
+        self.backbone.reset_parameters()
+        for task in self.heads:
+            self.heads[task].reset_parameters()
+        return
     
     ############### Helper Function #############
     
