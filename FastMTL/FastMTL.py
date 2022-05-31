@@ -109,12 +109,12 @@ print('Finish Data Loading', flush=True)
 
 ########################## Params from Backbone #################################
 if args.backbone == 'resnet34':
-    prototxt = 'models/deeplab_resnet34_adashare.prototxt'  
+    prototxt = '../models/deeplab_resnet34_adashare.prototxt'  
     D = coarse_B = 5
     mapping = {0:[0], 1:[1,2,3], 2:[4,5,6,7], 3:[8,9,10,11,12,13], 4:[14,15,16], 5:[17]}
     
 elif args.backbone == 'mobilenet':
-    prototxt = 'models/mobilenetv2.prototxt'
+    prototxt = '../models/mobilenetv2.prototxt'
     D = coarse_B = 5
     mapping = {0:[0,1,2,3,4,5,6], 1:[7,8,9,10,11,12,13,14,15,16,17], 2:[18,19,20,21,22], 
            3:[23,24,25,26,27,28,29,30], 4:[31], 5:[32]}
