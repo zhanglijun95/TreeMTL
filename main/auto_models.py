@@ -135,7 +135,7 @@ class MTSeqBackbone(nn.Module):
             for block in self.mtl_blocks:
                 output = block.forward()
                 for task in block.task_set:
-                    features[task].append(output)
+                    features[task].append(output.detach().cpu().numpy())
             return features
     
     def reset_parameters(self):

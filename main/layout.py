@@ -22,6 +22,9 @@ class Layout():
         self.conv_iter = [] # list of tuple, tuple for range
         self.virtual_loss = [] # list of float, float for loss
         
+        # new to IndFeatCorr
+        self.prob = 0
+        
         # Should be updated in the metric_inference function
         self.metric_list = [0.] * self.T
         self.score = 0.

@@ -36,7 +36,7 @@ class Trainer():
             self.stop = stop # Define how many consencutive good validate results we need
             self.good_metric = good_metric # Define at least how many good validate metrics every time to make counter+1
     
-    def train(self, iters, loss_lambda, savePath=None, reload=None, writerPath=None):
+    def train(self, iters, loss_lambda=None, savePath=None, reload=None, writerPath=None):
         if writerPath != None:
             writer = SummaryWriter(log_dir=writerPath)
         else:
@@ -45,6 +45,8 @@ class Trainer():
         self.model.train()
         if reload is not None and reload != 'false' and savePath is not None:
             self.load_model(savePath, reload)
+        if loss_lambda is None:
+            loss_lambda = {task: 1 for task in self.tasks}
 
         for i in range(self.startIter, iters):
             if self.early_stop and self.counter >= self.stop:
@@ -98,7 +100,7 @@ class Trainer():
             self.scheduler.step()
         return
     
-    def validate(self, it, writer=None):
+    def validate(self, it=0, writer=None):
         self.model.eval()
         loss_list = {}
         for task in self.tasks:

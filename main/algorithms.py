@@ -1,9 +1,20 @@
 import numpy as np
+import antropy as ant
 import copy
 import itertools
 import random
 from statistics import mean
 from main.layout import Layout
+
+def enumerator(T, B):
+    layout_list = [] 
+    
+    S0 = init_S(T, B) # initial state
+    L = Layout(T, B, S0) # initial layout
+    layout_list.append(L)
+    
+    enum_layout_wo_rdt(L, layout_list)
+    return layout_list
 
 def enum_layout(L, layout_list):
     # Main Function:
@@ -65,12 +76,13 @@ def coarse_to_fined(L, fined_B, mapping):
     new_L = Layout(L.T, fined_B, S)
     return new_L
 
-def metric_inference(L, two_task_metrics):
+def metric_inference(L, two_task_metrics=None):
     # Main Function:
     ## Figure out the subtrees consisting the given layout
     ## Compute the estimate metric for each task based on the subtrees' results
     
     S = L.state
+    subtree_dict = {}
     for t1 in range(L.T):
         subtree = []
         for t2 in range(L.T):
@@ -89,8 +101,34 @@ def metric_inference(L, two_task_metrics):
                     branch = i
                     break
             subtree.append([t1, t2, branch])
-        print(subtree)
-        L.metric_list[t1] = get_metric(two_task_metrics, subtree)
+        subtree_dict[t1] = subtree
+        if two_task_metrics is not None:
+            L.metric_list[t1] = get_metric(two_task_metrics, subtree)
+    return subtree_dict
+        
+def prob_inference(L, two_task_prob):
+    # Main Function:
+    ## Figure out the subtrees consisting the given layout
+    ## Compute the joint probability for the layout based on the subtrees' probability
+    
+    S = L.state
+    tasks = [i for i in range(L.T)]
+    subtree = []
+    for t1,t2 in itertools.combinations(tasks, 2):
+        branch = L.B # No branch - All share
+        for i in range(L.B): # For eac block
+            share_flag = False
+            for task_set in S[i]: # For each task set in ith block
+                # There exists a task set has both t1 and t2 -> t1 and t2 share in ith block
+                if t1 in task_set and t2 in task_set: 
+                    share_flag = True
+                    break
+            if share_flag is False:
+                branch = i
+                break
+        subtree.append([t1, t2, branch])
+    print('subtree: {}'.format(subtree))
+    L.prob = joint_prob(two_task_prob, subtree)
 
 # Helper functions
 def init_S(T, B):
@@ -129,6 +167,31 @@ def apply_cut(L, i, task_set, subsets):
     L_new.lowest_avail_cut = i # Update the lowest available cut position
     return L_new
 
+def reorg_two_task_results(two_task_pd, T, B):
+    tasks = [i for i in range(T)]
+    two_task_metrics = {}
+    for two_set in itertools.combinations(tasks, 2):
+        two_task_metrics[two_set] = []
+        for b in range(0, B+1): 
+            metric1 = two_task_pd[str(two_set)+'-0'][b]
+            metric2 = two_task_pd[str(two_set)+'-1'][b]
+            two_task_metrics[two_set].append([metric1, metric2])
+    return two_task_metrics
+
+def compute_weights(two_task_pd, T):
+    fluc = {t: [] for t in range(T)}
+    for two_set in itertools.combinations([i for i in range(T)], 2):
+        for idx in range(2):
+            metric = two_task_pd[str(two_set)+'-'+str(idx)].tolist()[1:]
+            vol = ant.svd_entropy(metric, normalize=True)
+            fluc[two_set[idx]].append(vol)
+
+    score_weights = []
+    for key in fluc:
+        score_weights.append(1-np.mean(fluc[key]))
+    score_weights_norm = [float(i)/sum(score_weights) for i in score_weights]
+    return score_weights_norm
+
 def get_metric(two_task_metrics, subtree):
     # Function:
     ## Return the average metric of target task based on the subtree' two_task_metrics results
@@ -144,3 +207,19 @@ def get_metric(two_task_metrics, subtree):
         if two_set in two_task_metrics:
             metric_list.append(two_task_metrics[two_set][branch][1])
     return mean(metric_list)
+
+def joint_prob(two_task_prob, subtree):
+    # Function:
+    ## Return the joint probability based on the subtree' probability   
+    prob_list = []
+    for two_task_branch in subtree:
+        branch = two_task_branch[2]
+        
+        two_set = (two_task_branch[0], two_task_branch[1])
+        if two_set in two_task_prob:
+            prob_list.append(two_task_prob[two_set][branch])
+
+        two_set = (two_task_branch[1], two_task_branch[0])
+        if two_set in two_task_prob:
+            prob_list.append(two_task_prob[two_set][branch])
+    return np.prod(prob_list)
