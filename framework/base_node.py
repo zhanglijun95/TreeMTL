@@ -73,6 +73,11 @@ class ComputeNode(nn.Module):
     def generate_basicOp(self, torchParamList):
         # Function: Generate opCommand according to different OpType
         return
+    
+    def reset_parameters(self):
+        if hasattr(self.basicOp, 'reset_parameters'):
+            self.basicOp.reset_parameters()
+        return 
         
     def forward(self):
         return self.internal_compute()
