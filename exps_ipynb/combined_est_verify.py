@@ -1,8 +1,11 @@
+import sys
+sys.path.append('../')
 import numpy as np
 import random
 import os
 import argparse
 from pathlib import Path
+import time
 
 import torch
 import torch.nn as nn
@@ -20,8 +23,8 @@ from data.pixel2pixel_loss import NYUCriterions, TaskonomyCriterions
 from data.pixel2pixel_metrics import NYUMetrics, TaskonomyMetrics
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--projectroot', action='store', dest='projectroot', default='/mnt/nfs/work1/huiguan/lijunzhang/multibranch/', help='project directory')
-parser.add_argument('--dataroot', action='store', dest='dataroot', default='/mnt/nfs/work1/huiguan/lijunzhang/policymtl/data/', help='datasets directory')
+parser.add_argument('--projectroot', action='store', dest='projectroot', default='/work/lijunzhang_umass_edu/data/multibranch/', help='project directory')
+parser.add_argument('--dataroot', action='store', dest='dataroot', default='/work/lijunzhang_umass_edu/data/policymtl/data/', help='datasets directory')
 parser.add_argument('--ckpt_dir', action='store', dest='ckpt_dir', default='checkpoint/', help='checkpoints directory')
 parser.add_argument('--writer_dir', action='store', dest='writer_dir', default='writer/', help='writer directory')
 parser.add_argument('--exp_dir', action='store', dest='exp_dir', default='exp/', help='save exp model directory')
@@ -54,17 +57,17 @@ print('='*60, flush=True)
 assert torch.cuda.is_available()
 
 ################################### Set Seed #####################################
-seed = args.seed
-if seed != 0:
-    torch.manual_seed(seed)
-    random.seed(seed)
-    np.random.seed(seed)
+# seed = args.seed
+# if seed != 0:
+#     torch.manual_seed(seed)
+#     random.seed(seed)
+#     np.random.seed(seed)
 
-#     torch.backends.cudnn.benchmark = False
-#     torch.backends.cudnn.deterministic = True
-    # torch.use_deterministic_algorithms(True) 
-else:
-    print('Default Seed 0 -> No Seed', flush=True)
+# #     torch.backends.cudnn.benchmark = False
+# #     torch.backends.cudnn.deterministic = True
+#     # torch.use_deterministic_algorithms(True) 
+# else:
+#     print('Default Seed 0 -> No Seed', flush=True)
 
 ################################### Exp Type ######################################
 if args.verify:
@@ -132,7 +135,7 @@ print('Finish Data Loading', flush=True)
 
 ########################## Params from Backbone #################################
 if args.backbone == 'resnet34':
-    prototxt = 'models/deeplab_resnet34_adashare.prototxt'
+    prototxt = '../models/deeplab_resnet34_adashare.prototxt'
     backbone_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/resnet34_backbone.model')
     if args.data == 'NYUv2':
         heads_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/resnet34_NYUv2_heads.model')
@@ -143,7 +146,7 @@ if args.backbone == 'resnet34':
     mapping = {0:[0], 1:[1,2,3], 2:[4,5,6,7], 3:[8,9,10,11,12,13], 4:[14,15,16], 5:[17]}
     
 elif args.backbone == 'mobilenet':
-    prototxt = 'models/mobilenetv2.prototxt'
+    prototxt = '../models/mobilenetv2.prototxt'
     backbone_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_backbone.model')
     if args.data == 'NYUv2':
         heads_init_path = os.path.join(args.projectroot, args.ckpt_dir, 'init/mobilenetv2_NYUv2_heads.model')
@@ -256,12 +259,16 @@ if exp == '2task':
     writerpath = None
 elif exp == 'verify':
     savepath = os.path.join(args.projectroot, args.ckpt_dir, args.data, args.exp_dir, str(args.layout_idx)+'/')
-    writerpath = os.path.join(args.projectroot, args.writer_dir, args.data, args.exp_dir, str(args.layout_idx)+'/')
-    Path(writerpath).mkdir(parents=True, exist_ok=True)
+    writerpath = None
+    # writerpath = os.path.join(args.projectroot, args.writer_dir, args.data, args.exp_dir, str(args.layout_idx)+'/')
+    # Path(writerpath).mkdir(parents=True, exist_ok=True)
 Path(savepath).mkdir(parents=True, exist_ok=True)
 
 if args.reload is False:
+    # start_time = time.time()
     trainer.train(args.total_iters, loss_lambda, savepath, writerPath=writerpath)
+    # torch.cuda.synchronize()
+    # print("--- %s seconds ---" % (time.time() - start_time))
 else:
     if exp == '2task':
         reload_ckpt = '_'.join(tasks) + '_b' + str(branch) + '.model'

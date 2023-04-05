@@ -99,8 +99,10 @@ def est_final_loss(loss_samples, n, alpha):
     return np.exp(x2)
 
 def est_final_loss2(loss_samples, n, alpha, target):
-    x0, x1 = np.log(loss_samples[0]-loss_samples[1]), np.log(loss_samples[1]-loss_samples[2])
-    temp = loss_samples[2]
+    # x0, x1 = np.log(loss_samples[0]-loss_samples[1]), np.log(loss_samples[1]-loss_samples[2])
+    x0, x1 = np.log(loss_samples[1]-loss_samples[2]), np.log(loss_samples[2]-loss_samples[3])
+    # temp = loss_samples[2]
+    temp = loss_samples[3]
     est_n = -1
     flag = True
     

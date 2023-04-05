@@ -17,7 +17,7 @@ class Taskonomy(torch.utils.data.Dataset):
             info = json.load(f)
         
         self.mode = mode
-        if self.mode is 'train':
+        if self.mode == 'train':
             self.dataroot = os.path.join(dataroot, self.mode)
         elif self.mode in ['test', 'test_small']:
             self.dataroot = os.path.join(dataroot, 'test')

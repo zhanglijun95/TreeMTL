@@ -106,19 +106,20 @@ class Trainer():
         for task in self.tasks:
             loss_list[task] = []
         
-        for i, data in enumerate(self.val_dataloader):
-            x = data['input'].cuda()
-            output = self.model(x)
+        with torch.no_grad():
+            for i, data in enumerate(self.val_dataloader):
+                x = data['input'].cuda()
+                output = self.model(x)
 
-            for task in self.tasks:
-                y = data[task].cuda()
-                if task + '_mask' in data:
-                    tloss = self.criterion_dict[task](output[task], y, data[task + '_mask'].cuda())
-                    self.metric_dict[task](output[task], y, data[task + '_mask'].cuda())
-                else:
-                    tloss = self.criterion_dict[task](output[task], y)
-                    self.metric_dict[task](output[task], y)
-                loss_list[task].append(tloss.item())
+                for task in self.tasks:
+                    y = data[task].cuda()
+                    if task + '_mask' in data:
+                        tloss = self.criterion_dict[task](output[task], y, data[task + '_mask'].cuda())
+                        self.metric_dict[task](output[task], y, data[task + '_mask'].cuda())
+                    else:
+                        tloss = self.criterion_dict[task](output[task], y)
+                        self.metric_dict[task](output[task], y)
+                    loss_list[task].append(tloss.item())
         
         task_val_results = {}
         for task in self.tasks:
@@ -135,6 +136,8 @@ class Trainer():
         if self.early_stop:
             self.early_stop_monitor(task_val_results)
         print('======================================================================', flush=True)
+        
+        torch.cuda.empty_cache()
         return
     
     def early_stop_monitor(self, task_val_results):

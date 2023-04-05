@@ -109,11 +109,19 @@ class MTSeqBackbone(nn.Module):
                     m.weight.data.fill_(1)
                     m.bias.data.zero_()
     
-    def forward(self, x): 
+    def forward(self, x, task_idx=None): 
         self.inputNode.set_data(x)
         if self.layout is None:
             for block in self.basic_blocks:
                 feature = block.forward()
+            return feature
+        elif task_idx != None:
+            for block in self.mtl_blocks:
+                if task_idx in block.task_set:
+                    output = block.forward()
+                    if block.layer_idx == self.layout.B - 1:
+                        feature = output
+                        break
             return feature
         else:
             features = [0] * self.layout.T
@@ -123,6 +131,7 @@ class MTSeqBackbone(nn.Module):
                     for task in block.task_set:
                         features[task] = output
             return features
+            
         
     def extract_features(self, x):
         self.inputNode.set_data(x)
@@ -347,14 +356,18 @@ class MTSeqModel(nn.Module):
         if heads_init is not None:
             self.heads.load_state_dict(torch.load(heads_init), strict=False)
         
-    def forward(self, x):
-        features = self.backbone(x)
-        output = {}
-        idx = 0
-        for task in self.heads:
-            output[task] = self.heads[task](features[idx])
-            idx += 1
-        return output
+    def forward(self, x, task=None):
+        if not task:
+            features = self.backbone(x)
+            output = {}
+            idx = 0
+            for task in self.heads:
+                output[task] = self.heads[task](features[idx])
+                idx += 1
+            return output
+        else:
+            feature = self.backbone(x, list(self.heads.keys()).index(task))
+            return self.heads[task](feature)
 
     def extract_features(self, x):
         return self.backbone.extract_features(x)

@@ -45,13 +45,16 @@ def remove_redundancy(layout_list):
             new_layout_list.append(L)
     return new_layout_list
 
-def enum_layout_wo_rdt(L, layout_list):
+def enum_layout_wo_rdt(L, layout_list, layout_idx=None):
     # Main Function:
     ##  Recursively enumerate all possible layouts
     
     # Exit Case: If the number of cut applied to L has already reached T-1, no more cut can be applied
     if L.num_cut >= L.T-1:
         return
+    # Exit Case: If found the current layout_idx
+    if layout_idx is not None and len(layout_list)>=layout_idx+1:
+        return True
     # Enumerate all possible layout cuts on L
     for i in range(L.lowest_avail_cut, L.B): # Cut for every avaiable block
         for task_set in L.state[i]: # Cut for each task set in ith block
@@ -62,7 +65,8 @@ def enum_layout_wo_rdt(L, layout_list):
                 L_prime = apply_cut(L, i, task_set, subsets) # Construct new layout based on the cut
                 if L_prime not in layout_list:
                     layout_list.append(L_prime)
-                    enum_layout_wo_rdt(L_prime, layout_list)
+                    if enum_layout_wo_rdt(L_prime, layout_list, layout_idx):
+                        return True
     return
 
 def coarse_to_fined(L, fined_B, mapping):

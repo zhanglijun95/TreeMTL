@@ -210,10 +210,8 @@ class Deeplab_ResNet_Backbone_Layout(nn.Module):
         self.blocks = []
         self.layer_config = layers
         
-        branch_cnt = 0
         seed = self._make_seed()
         self.__add_to_blocks(seed)
-        branch_cnt += 1
         
         for segment, num_blocks in enumerate(self.layer_config):
             filt_size, num_blocks, stride, dilation = filt_sizes[segment],layers[segment],strides[segment],dilations[segment]
@@ -277,14 +275,23 @@ class Deeplab_ResNet_Backbone_Layout(nn.Module):
         self.blocks.append(block)
         return   
     
-    def forward(self, x): 
-        features = [0] * self.layout.T
-        for block in self.mtl_blocks:
-            block.output = block(x)
-            if block.layer_idx == self.layout.B - 1:
-                for task in block.task_set:
-                    features[task] = block.output
-        return features
+    def forward(self, x, task_idx=None):
+        if task_idx != None:
+            for block in self.mtl_blocks:
+                if task_idx in block.task_set:
+                    block.output = block(x)
+                    if block.layer_idx == self.layout.B - 1:
+                        feature = block.output
+                        break
+            return feature  
+        else:
+            features = [0] * self.layout.T
+            for block in self.mtl_blocks:
+                block.output = block(x)
+                if block.layer_idx == self.layout.B - 1:
+                    for task in block.task_set:
+                        features[task] = block.output
+            return features
     
 class Deeplab_ASPP_Layout(nn.Module):
     def __init__(self, layout, cls_num=None):
@@ -296,14 +303,76 @@ class Deeplab_ASPP_Layout(nn.Module):
             for task in cls_num:
                 self.heads[task] = ASPPHeadNode(512, cls_num[task])
         
-    def forward(self, x):
-        features = self.backbone(x)
-        if len(self.heads) == 0:
-            return features
+    def forward(self, x, task=None):
+        if not task:
+            features = self.backbone(x)
+            if len(self.heads) == 0:
+                return features
+            else:
+                output = {}
+                idx = 0
+                for task in self.heads:
+                    output[task] = self.heads[task](features[idx])
+                    idx += 1
+                return output
         else:
-            output = {}
-            idx = 0
-            for task in self.heads:
-                output[task] = self.heads[task](features[idx])
-                idx += 1
-            return output
+            feature = self.backbone(x, list(self.heads.keys()).index(task))
+            return self.heads[task](feature)
+        
+        
+class Deeplab_FC(nn.Module):
+    def __init__(self, tasks, layout=None, branch=None, cls_num={}, verbose=True):
+        super(Deeplab_FC, self).__init__()
+        self.tasks = tasks
+        
+        # Note: Both layout and branch are fined ones (coarse to fined are converted outside the model initialization)
+        if layout is not None:
+            # Constrcut MTL-Model from layout
+            self.layout = layout
+        elif branch is not None:
+            # Construct first-order MTL-Model from the branching point and the number of blocks
+            if len(self.tasks) != 2:
+                print('The number of tasks to construct the first-order layouts is not 2.', flush=True)
+                exit()
+            self.branch = branch
+            self.layout = self.first_order_layout()
+        else:
+            # Missing params
+            print('Missing params for constrcuting multi-task model.', flush=True)
+            exit()
+        
+        if verbose:
+            print('Construct MTSeqModel from Layout:', flush=True)
+            print(self.layout, flush=True)
+        
+        
+        cfgs = [
+        # t, c, n, s, SE for EffNet_s
+        [1,  24,  2, 1, 0],
+        [4,  48,  4, 2, 0],
+        [4,  64,  4, 2, 0],
+        [4, 128,  6, 2, 1],
+        [6, 160,  9, 1, 1],
+        [6, 256, 15, 2, 1],
+        ]
+        self.backbone = Deeplab_ResNet_Backbone_Layout(BasicBlock, [3, 4, 6, 3], layout)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.heads = nn.ModuleDict({task: nn.Sequential(nn.Dropout(p=0.2, inplace=True),
+                                                        nn.Linear(512, cls_num[task]),) for task in self.tasks})
+        
+    def forward(self, x, task):
+        feature = self.backbone(x, self.tasks.index(task))
+        output = self.heads[task](torch.flatten(self.avgpool(feature),1)) 
+        return output
+    
+    #  Construct layout for two tasks and branch point 
+    def first_order_layout(self):
+        S = []
+        for i in range(42):
+            if i < self.branch:
+                S.append([set([0,1])])
+            else:
+                S.append([set([0]),set([1])])
+        layout = Layout(2, 42, S)
+        return layout
+        

@@ -53,7 +53,7 @@ class DataMetrics(object):
     
     def __seg_records(self, pred, gt):
         pred, gt, pixelAcc, err = self.__seg_error(pred, gt)
-        new_mat = confusion_matrix(gt, pred, self.records['labels'])
+        new_mat = confusion_matrix(gt, pred, labels=self.records['labels'])
         self.records['conf_mat'] += new_mat
         self.records['pixelAccs'].append(pixelAcc)
         self.records['errs'].append(err)

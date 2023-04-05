@@ -46,7 +46,7 @@ class Layout():
         self.score = mean(self.metric_list)
         
     def set_score_weighted(self, weights):
-        if len(weights) != (self.T) or sum(weights)!=1:
+        if len(weights) != (self.T):
             print('Wrong weights!', flush=True)
             return
         self.score = np.dot(np.array(self.metric_list),np.array(weights))

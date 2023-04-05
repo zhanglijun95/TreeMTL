@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-log_dir=/mnt/nfs/work1/huiguan/lijunzhang/multibranch/log
-partition=rtx8000-long
+log_dir=/work/lijunzhang_umass_edu/data/multibranch/log
+partition=gpu-long
+constraint=v100
 exp_i=0
 
 ######### for NYUv2 ##########
-data=NYUv2
-batch_size=16
-total_iters=20000
-lr=0.001
-decay_lr_freq=4000
-decay_lr_rate=0.5
-print_iters=50
-save_iters=200
-val_iters=200
+# data=NYUv2
+# batch_size=16
+# total_iters=20000
+# lr=0.001
+# decay_lr_freq=4000
+# decay_lr_rate=0.5
+# print_iters=50
+# save_iters=200
+# val_iters=200
 
 # for resnet
 # declare -a idxs=(383 342 415 344 278 251 231 161 65) # 10-07 -> 10/14 reload; 10-19
@@ -35,18 +36,18 @@ val_iters=200
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 17 19 25 23 49 50 12 21) # 01-23 -> reload
 # declare -a idxs=(0 47 45 46 43 30 7 37 41 35 9 17 19 25 23 49 50 12 4 14 21) # 01-24
 # declare -a idxs=(0 7 11 10 9 8 16 15 39 31 49 38 48 40 17 4 1 27 6 23) # 02-21
-declare -a idxs=(2) # 04-12
+# declare -a idxs=(2) # 04-12
 
 ######### for Taskonomy ##########
-# data=Taskonomy
-# batch_size=8
-# total_iters=50000
-# lr=0.0001
-# decay_lr_freq=10000
-# decay_lr_rate=0.3
-# print_iters=100
-# save_iters=500
-# val_iters=500
+data=Taskonomy
+batch_size=8
+total_iters=50000
+lr=0.0005 #0.0001
+decay_lr_freq=5000 #10000
+decay_lr_rate=0.5 #0.3
+print_iters=100
+save_iters=500
+val_iters=500
 
 # for resnet
 # declare -a idxs=(1057447) # learn to branch
@@ -55,6 +56,8 @@ declare -a idxs=(2) # 04-12
 # declare -a idxs=(7537) # BMTAS
 # declare -a idxs=(352 958 480 353 360 469 190 959 1037 358 962 1020 481 350 483 1043 348 235 191 200) # verify_0123
 # declare -a idxs=(360 350 483 480 1043) # verify_0123 reload
+declare -a idxs=(352 958 353 469 190 959 358 481 348 235 191 200 962 1020 1037) # verify_0123
+
 # declare -a idxs=(352 958 480 353 360) # verify_0202 top5
 # declare -a idxs=(817 1 562 4697 6539) # verify_0202 top5 under flops
 # declare -a idxs=(4) # baseline
@@ -64,17 +67,17 @@ declare -a idxs=(2) # 04-12
 # declare -a idxs=(688 1667 2027)
 
 ########### others ##########
-exp_dir=exp/
+exp_dir=verify_0123/
 seed=10
-# backbone='resnet34'
-backbone='mobilenet'
+backbone='resnet34'
+# backbone='mobilenet'
 # backbone='mobilenetS'
 reload=false
 
 # ########## run ##########
 for layout_idx in "${idxs[@]}"; do
    if ((exp_i>=40)); then
-      partition=2080ti-long
+      partition=gypsum-2080ti
    fi
 
    if ${reload}; then
@@ -82,7 +85,6 @@ for layout_idx in "${idxs[@]}"; do
        sbatch --partition ${partition} --job-name=V${layout_idx} \
         -o ${log_dir}/${data}/${out_dir}layout_${layout_idx}.stdout \
         -e ${log_dir}/${data}/${out_dir}layout_${layout_idx}.stderr \
-        --exclude node[094,096,097,131] \
         combined_est_verify.sbatch \
         --exp_dir ${exp_dir} --seed ${seed} --data ${data} --batch_size ${batch_size} --backbone ${backbone} --layout_idx ${layout_idx} --verify \
         --total_iters ${total_iters} --lr ${lr} --decay_lr_freq ${decay_lr_freq} --decay_lr_rate ${decay_lr_rate} --reload \
@@ -92,7 +94,6 @@ for layout_idx in "${idxs[@]}"; do
        sbatch --partition ${partition} --job-name=V${layout_idx} \
         -o ${log_dir}/${data}/${out_dir}layout_${layout_idx}.stdout \
         -e ${log_dir}/${data}/${out_dir}layout_${layout_idx}.stderr \
-        --exclude node[094,096,097,131] \
         combined_est_verify.sbatch \
         --exp_dir ${exp_dir} --seed ${seed} --data ${data} --batch_size ${batch_size} --backbone ${backbone} --layout_idx ${layout_idx} --verify \
         --total_iters ${total_iters} --lr ${lr} --decay_lr_freq ${decay_lr_freq} --decay_lr_rate ${decay_lr_rate} \
